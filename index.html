@@ -2,7 +2,7 @@
     <html lang="zh-CN">
     <head>
       <meta charset="utf-8">
-      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
       <meta name="referrer" content="no-referrer">
       <title>3D坦克转化组件详细介绍</title>
       <style>
@@ -53,12 +53,121 @@
     li { margin: 0 0 1mm; }
     .empty { color: #8a96a3; margin: 0; }
     .source { color: #5d6978; font-size: 9pt; }
+    
+    /* Interactive website layer */
+    html { scroll-behavior: smooth; }
+    body { background: #f5f7fb; font-size: 15px; line-height: 1.65; }
+    .cover {
+      min-height: auto;
+      padding: 28px 22px 18px;
+      border-bottom: 1px solid #d9e0e7;
+      background: #ffffff;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      box-shadow: 0 6px 18px rgba(21, 32, 43, 0.07);
+    }
+    h1 { font-size: clamp(28px, 5vw, 48px); margin: 0 0 16px; }
+    .toolbar { display: grid; grid-template-columns: minmax(180px, 1fr) auto auto; gap: 10px; align-items: center; margin: 12px 0; }
+    .searchBox { width: 100%; border: 1px solid #cbd3dc; border-radius: 6px; padding: 10px 12px; font-size: 15px; background: #fff; color: #1d2733; }
+    .toolGroup { display: flex; gap: 8px; flex-wrap: wrap; }
+    .toolBtn, .filterBtn, .toc a {
+      border: 1px solid #cbd3dc;
+      background: #fff;
+      color: #1d2733;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .toolBtn:hover, .filterBtn:hover, .toc a:hover { border-color: #8aa1b8; background: #f0f4f8; }
+    .filterBtn.active, .toc a.active { background: #d43f2f; border-color: #d43f2f; color: #fff; }
+    .stats { color: #657282; font-size: 13px; white-space: nowrap; }
+    .toc { gap: 8px; margin-top: 10px; max-height: 96px; overflow: auto; padding-bottom: 2px; }
+    .toc a { display: inline-flex; align-items: center; min-height: 34px; }
+    .turret {
+      page-break-before: auto;
+      max-width: 1180px;
+      margin: 22px auto;
+      padding: 0 18px 6px;
+    }
+    .turret.hidden, .augment.hidden { display: none; }
+    h2 {
+      position: sticky;
+      top: 194px;
+      z-index: 10;
+      background: #f5f7fb;
+      font-size: 26px;
+      margin: 0 0 8px;
+      padding: 12px 0 8px;
+      border-bottom: 2px solid #d43f2f;
+    }
+    .count { margin: 0 0 12px; }
+    .augment {
+      background: #fff;
+      border: 1px solid #d9e0e7;
+      border-radius: 8px;
+      margin: 10px 0;
+      padding: 0;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(21, 32, 43, 0.05);
+    }
+    .augment h3 {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 0;
+      padding: 14px 42px 14px 14px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 18px;
+    }
+    .augment h3::after { content: "+"; position: absolute; right: 16px; top: 13px; font-size: 22px; color: #657282; }
+    .augment.open h3::after { content: "-"; }
+    .rarity, .price { font-size: 13px; }
+    .desc, .cols { padding: 0 14px 14px; }
+    .augment:not(.open) .desc, .augment:not(.open) .cols { display: none; }
+    .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .cols > div { background: #f8fafc; border: 1px solid #e3e8ef; border-radius: 6px; padding: 12px; }
+    mark { background: #ffe08a; color: inherit; padding: 0 2px; border-radius: 2px; }
+    .noResults { display: none; max-width: 1180px; margin: 28px auto; padding: 18px; color: #657282; background: #fff; border: 1px solid #d9e0e7; border-radius: 8px; }
+    .noResults.show { display: block; }
+    @media (max-width: 760px) {
+      .cover { padding: 18px 14px 14px; }
+      .toolbar { grid-template-columns: 1fr; }
+      .stats { white-space: normal; }
+      h2 { top: 250px; font-size: 22px; }
+      .cols { grid-template-columns: 1fr; }
+    }
+    @media print {
+      .cover { position: static; box-shadow: none; }
+      .toolbar { display: none; }
+      .augment .desc, .augment .cols { display: block !important; }
+      .turret.hidden, .augment.hidden { display: block !important; }
+    }
     </style>
     </head>
     <body>
       <section class="cover">
         <h1>3D坦克转化组件详细介绍</h1>
-        <div class="toc"><a href="#firebird">火焰炮</a><a href="#freeze">冰风暴</a><a href="#isida">磁力炮</a><a href="#tesla">特斯拉</a><a href="#hammer">滑膛炮</a><a href="#twins">离子炮</a><a href="#ricochet">火龙珠</a><a href="#vulcan">极速炮</a><a href="#smoky">轰天炮</a><a href="#striker">导弹炮</a><a href="#thunder">雷暴炮</a><a href="#tsunami">海啸</a><a href="#scorpion">天蝎</a><a href="#magnum">马格南</a><a href="#railgun">激光炮</a><a href="#gauss">电磁炮</a><a href="#shaft">镭射炮</a></div>
+                <div class="toolbar" aria-label="交互工具栏">
+          <input id="augmentSearch" class="searchBox" type="search" placeholder="搜索炮塔、组件、效果、参数..." autocomplete="off">
+          <div class="toolGroup" aria-label="稀有度筛选">
+            <button class="filterBtn active" data-rarity="all" type="button">全部</button>
+            <button class="filterBtn" data-rarity="稀有" type="button">稀有</button>
+            <button class="filterBtn" data-rarity="史诗" type="button">史诗</button>
+            <button class="filterBtn" data-rarity="传奇" type="button">传奇</button>
+            <button class="filterBtn" data-rarity="异域" type="button">异域</button>
+          </div>
+          <div class="toolGroup">
+            <button id="expandAll" class="toolBtn" type="button">展开全部</button>
+            <button id="collapseAll" class="toolBtn" type="button">收起全部</button>
+            <span id="resultStats" class="stats"></span>
+          </div>
+        </div>        <div class="toc"><a href="#all" class="active" data-target="all">全部炮塔</a><a href="#firebird">火焰炮</a><a href="#freeze">冰风暴</a><a href="#isida">磁力炮</a><a href="#tesla">特斯拉</a><a href="#hammer">滑膛炮</a><a href="#twins">离子炮</a><a href="#ricochet">火龙珠</a><a href="#vulcan">极速炮</a><a href="#smoky">轰天炮</a><a href="#striker">导弹炮</a><a href="#thunder">雷暴炮</a><a href="#tsunami">海啸</a><a href="#scorpion">天蝎</a><a href="#magnum">马格南</a><a href="#railgun">激光炮</a><a href="#gauss">电磁炮</a><a href="#shaft">镭射炮</a></div>
       </section>
       <section class="turret" id="firebird"><h2>火焰炮</h2><p class="count">共 13 个强化组件</p>
                 <article class="augment">
@@ -4410,7 +4519,7 @@
                     </div>
                   </div>
                 </article>
-                </section><section class="turret" id="shaft"><h2>镭射</h2><p class="count">共 18 个强化组件</p>
+                </section><section class="turret" id="shaft"><h2>镭射炮</h2><p class="count">共 18 个强化组件</p>
                 <article class="augment">
                   <h3>肾上腺素 <span class="rarity">稀有</span> <span class="price">价格/条件：245 000</span></h3>
                   <div class="desc"><p>当坦克严重受损时，会增加炮塔伤害。</p><p>为增强型伤害调制器添加备用电池，仅在坦克车体严重损坏的极端情况下激活。使用两种能源为损伤调制器供电是不安全的——它可能会爆炸。仅在严重损坏时才激活它的要求可能是为了避免保修索赔。</p></div>
@@ -4681,8 +4790,85 @@
                   </div>
                 </article>
                 </section>
+          <div id="noResults" class="noResults">没有找到匹配的强化组件。</div>
+      <script>
+      (() => {
+        const search = document.getElementById('augmentSearch');
+        const stats = document.getElementById('resultStats');
+        const noResults = document.getElementById('noResults');
+        const rarityButtons = [...document.querySelectorAll('.filterBtn')];
+        const navLinks = [...document.querySelectorAll('.toc a')];
+        const turrets = [...document.querySelectorAll('.turret')];
+        const cards = [...document.querySelectorAll('.augment')];
+        let activeRarity = 'all';
+        let activeTurret = 'all';
+
+        turrets.forEach(section => {
+          const name = section.querySelector('h2')?.textContent.trim() || '';
+          section.dataset.name = name;
+          section.querySelectorAll('.augment').forEach(card => {
+            card.dataset.turret = section.id;
+            card.dataset.turretName = name;
+            card.dataset.rarity = card.querySelector('.rarity')?.textContent.trim() || '';
+            card.dataset.search = (name + ' ' + card.textContent).toLowerCase();
+            card.querySelector('h3')?.addEventListener('click', () => card.classList.toggle('open'));
+          });
+        });
+
+        const normalize = value => value.trim().toLowerCase();
+        function applyFilters() {
+          const term = normalize(search.value || '');
+          let shown = 0;
+          cards.forEach(card => {
+            const rarityOk = activeRarity === 'all' || card.dataset.rarity === activeRarity;
+            const turretOk = activeTurret === 'all' || card.dataset.turret === activeTurret;
+            const termOk = !term || card.dataset.search.includes(term);
+            const visible = rarityOk && turretOk && termOk;
+            card.classList.toggle('hidden', !visible);
+            if (visible) {
+              shown += 1;
+              if (term) card.classList.add('open');
+            }
+          });
+          turrets.forEach(section => {
+            const visibleCount = section.querySelectorAll('.augment:not(.hidden)').length;
+            section.classList.toggle('hidden', visibleCount === 0);
+            const count = section.querySelector('.count');
+            if (count) count.textContent = visibleCount ? `显示 ${visibleCount} 个强化组件` : '没有匹配的强化组件';
+          });
+          stats.textContent = `显示 ${shown} / ${cards.length} 个组件`;
+          noResults.classList.toggle('show', shown === 0);
+        }
+
+        search.addEventListener('input', applyFilters);
+        rarityButtons.forEach(btn => btn.addEventListener('click', () => {
+          activeRarity = btn.dataset.rarity;
+          rarityButtons.forEach(item => item.classList.toggle('active', item === btn));
+          applyFilters();
+        }));
+        navLinks.forEach(link => link.addEventListener('click', event => {
+          const href = link.getAttribute('href') || '';
+          activeTurret = link.dataset.target || href.replace('#', '') || 'all';
+          navLinks.forEach(item => item.classList.toggle('active', item === link));
+          applyFilters();
+          if (activeTurret === 'all') {
+            event.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }));
+        document.getElementById('expandAll').addEventListener('click', () => cards.forEach(card => {
+          if (!card.classList.contains('hidden')) card.classList.add('open');
+        }));
+        document.getElementById('collapseAll').addEventListener('click', () => cards.forEach(card => card.classList.remove('open')));
+        cards.slice(0, 4).forEach(card => card.classList.add('open'));
+        applyFilters();
+      })();
+      </script>
     </body>
     </html>
+
+
+
 
 
 
